@@ -10,13 +10,15 @@ In this lab, I aim to present 2 interactive web maps visualizing by the COVID-19
 ![Map 1 Screenshot](img/map1.png)
 Here I used a choropleth map to show the county-level COVID-19 case rates and used a sequential color scale.  
 Function: Users can hover over counties to see the county name, state, and the covid rate in the top left bar.
-[Open Map 1](map1.html)
+[Open Map 1](https://paisleyw829.github.io/PaisleyGEOG458lab3/map1.html
+)
 
 - **Map 2: US TOTAL COVID-19 CASES 2020**
 ![Map 2 Screenshot](img/map2.png)
 Here I used proportional circle map where circle size represents total COVID-19 cases at each county level.  
 Function: Users can click on those circles to view detailed information.
-[Open Map 2](map2.html)
+[Open Map 2](https://paisleyw829.github.io/PaisleyGEOG458lab3/map2.html
+)
 
 ## Libraries and Tools
 - **Mapbox**
