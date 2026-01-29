@@ -44,8 +44,8 @@ Function: Users can click on those circles to view detailed information.
 - **Basemap**:  
   mapbox://styles/mapbox/dark-v10 
 
-## AI Usage Statement
-AI tools were used in a limited in this lab assignment.
+## AI Usage
+AI tools were used in a limited role in this lab assignment.
 - Debugging syntax errors
 - Clarifying Mapbox error messages and unexpected behavior
 - Conceptual hints about thematic mapping techniques and Mapbox expressions
