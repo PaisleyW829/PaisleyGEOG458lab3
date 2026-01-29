@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>COVID-19 Cases in the US (2020)</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <link href="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.css" rel="stylesheet">
+  <script src="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.js"></script>
+
+  <style>
+    h2, h3 { margin: 10px; font-size: 18px; }
+    h3 { font-size: 12px; }
+    p { margin: 10px; }
+
+    #map {
+      position: absolute;
+      top: 0; bottom: 0; left: 0; right: 0;
+      width: 100%;
+    }
+
+    .map-overlay {
+      position: absolute;
+      bottom: 0; left: 0;
+      background: rgba(255, 255, 255, 0.85);
+      border: 1px solid rgba(0,0,0,0.2);
+      margin-left: 20px; font-family: Arial, sans-serif;
+      overflow: auto; border-radius: 3px;
+    }
+
+    #features { top: 0; height: 140px}
+    #legend { padding: 10px; line-height: 18px; height: 170px; margin-bottom: 40px; width: 170px; }
+
+    .legend-circle {
+      display: inline-block;
+      border: 1px solid #333;
+      border-radius: 50%;
+      background: rgba(255, 99, 71, 0.55);
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+
+  <div class="map-overlay" id="features">
+    <h2>US TOTAL COVID-19 CASES 2020</h2>
+    <h3>This map visualizes county-level COVID-19 case rates per 1,000 residents across the US in 2020. Counties are shaded using a choropleth color scale, where darker colors indicate higher case rates.</h3>
+    <h3>Created by Paisley Wu</h3>
+    <div id="text-description">
+      <p>Click on a circle to see the description!</p>
+    </div>
+  </div>
+
+  <div class="map-overlay" id="legend"></div>
+
+  <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoicGFpc2xleXc4MjkiLCJhIjoiY21oZTY4Z3h6MGFpbzJsb2UzbWkxZjZybyJ9.qvAAm5rLQZPLPn8ltX2vLg';
+
+    const map = new mapboxgl.Map({
+      container: 'map',
+      style: 'mapbox://styles/mapbox/dark-v10',
+      zoom: 4,
+      center: [-98, 39],
+      projection: 'albers'
+    });
+
+    const CASE_FIELD = 'cases';
+
+    // these 2 lines are for breaking the data into 3 groups, so it will be easier for us to make the legend
+    const breaks = [1000, 10000, 50000];
+    const radii  = [4, 10, 18];
+
+    map.on('load', () => {
+      map.addSource('covidCounts', {
+        type: 'geojson',
+        data: 'assets/us-covid-2020-counts.json'
+      });
+
+      map.addLayer({
+        id: 'counts-circle',
+        type: 'circle',
+        source: 'covidCounts',
+        paint: {
+            'circle-radius': [
+                'interpolate',
+                ['linear'],
+                ['coalesce', ['to-number', ['get', CASE_FIELD]], 0],
+                1000, 4,
+                10000, 10,
+                50000, 18
+            ],
+            'circle-color': [
+                'step',
+                ['coalesce', ['to-number', ['get', CASE_FIELD]], 0],
+                '#fee5d9',
+                1000, '#fcae91',
+                10000, '#fb6a4a',
+                50000, '#de2d26',
+                100000, '#a50f15'
+            ],
+            'circle-opacity': 0.6,
+            'circle-stroke-color': '#ffffff',
+            'circle-stroke-width': 0.6
+            }
+
+      });
+
+      // the popup thingy if we click on the circle
+      map.on('click', 'counts-circle', (e) => {
+        const p = e.features[0].properties;
+        const county = p.county || p.NAME || 'County';
+        const state = p.state || p.STATE_NAME || '';
+        const cases = p[CASE_FIELD];
+
+        new mapboxgl.Popup()
+          .setLngLat(e.lngLat)
+          .setHTML(`<strong>${county}${state ? ', ' + state : ''}</strong><br/>Total cases (2020): <strong>${cases}</strong>`)
+          .addTo(map);
+
+        document.getElementById('text-description').innerHTML =
+          `<h3>${county}${state ? ', ' + state : ''}</h3><p><strong>${cases}</strong> total cases in 2020</p>`;
+      });
+
+      map.on('mouseenter', 'counts-circle', () => map.getCanvas().style.cursor = 'pointer');
+      map.on('mouseleave', 'counts-circle', () => map.getCanvas().style.cursor = '');
+
+      // this is my legend
+      const legend = document.getElementById('legend');
+      legend.innerHTML = `<b>COVID CASES</b><br><br>`;
+
+      const labels = [`${breaks[0].toLocaleString()}`, `${breaks[1].toLocaleString()}`, `${breaks[2].toLocaleString()}+`];
+
+      for (let i = 0; i < breaks.length; i++) {
+        const d = radii[i] * 2;
+
+        const row = document.createElement('div');
+        row.style.marginBottom = '8px';
+
+        const c = document.createElement('span');
+        c.className = 'legend-circle';
+        c.style.width = d + 'px';
+        c.style.height = d + 'px';
+
+        const t = document.createElement('span');
+        t.innerHTML = labels[i];
+
+        row.appendChild(c);
+        row.appendChild(t);
+        legend.appendChild(row);
+      }
+
+      const src = document.createElement('div');
+      src.style.fontSize = '10pt';
+      src.style.marginTop = '8px';
+      src.innerHTML = 'Source: <a href="https://github.com/nytimes/covid-19-data/blob/43d32dde2f87bd4dafbb7d23f5d9e878124018b8/live/us-counties.csv" target="_blank" rel="noopener noreferrer">New York Times COVID-19 Data</a>';
+      
+      ;
+
+      legend.appendChild(src);
+    });
+  </script>
+</body>
+</html>
